@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white font-sans;
+  }
+
+  /* ============================================================
+   * FORM READABILITY RESET
+   * ============================================================
+   * body{text-white} inherits into every native form control,
+   * but those controls default to a white/light background → text
+   * becomes invisible. Fixes below force dark-on-light by default.
+   * Utilities (text-white, bg-gray-800, etc.) still override
+   * because the `utilities` layer sits above `base`.
+   * ============================================================ */
+
+  /* ---- 1. Text inputs, selects, textareas ---- */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']):not([type='image']):not([type='button']):not([type='submit']):not([type='reset']),
+  select,
+  textarea {
+    @apply text-gray-900 bg-white;
+  }
+
+  /* ---- 2. Native <select> dropdown options ---- */
+  select option {
+    @apply text-gray-900 bg-white;
+  }
+
+  /* ---- 3. Placeholder text ---- */
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-400;
+  }
+
+  /* ---- 4. Radio / checkbox — brand-coloured accent dot ---- */
+  input[type="radio"],
+  input[type="checkbox"] {
+    @apply accent-faz-orange;
+  }
+
+  /* ---- 5. Radio & checkbox LABELS ----
+   * These wrap a control and appear inline in forms (usually on a
+   * white modal card). Without this, the label text inherits
+   * body's text-white and vanishes on the white background.
+   *
+   * The :has() selector targets ONLY labels that actually contain
+   * a radio or checkbox — so plain text labels (like "Email Address"
+   * on the login page) stay untouched and remain readable on dark
+   * surfaces.
+   */
+  label:has(> input[type="radio"]):not([class*="text-"]),
+  label:has(> input[type="checkbox"]):not([class*="text-"]) {
+    @apply text-gray-700;
+  }
+
+  /* ---- 6. Labels inside dialogs / modals ----
+   * Modal cards are almost always light. Catches labels like
+   * "Payment Method", "Title", etc., that live inside a dialog
+   * but don't carry their own text colour.
+   * Adjust the selector if your Modal component uses a different
+   * wrapper class (e.g. .modal, .dialog, .MuiDialog-root).
+   */
+  [role="dialog"] label:not([class*="text-"]),
+  .modal label:not([class*="text-"]) {
+    @apply text-gray-700;
+  }
+
+  /* ---- 7. Chrome / Edge autofill ----
+   * Stops the yellow-pill artifact and forces readable text.
+   */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: #111827;
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+
+   /* ============================================================
+   * LIGHT SURFACE ⇒ DARK TEXT
+   * ============================================================
+   * Any element with a light background must default its text
+   * to a readable dark color, or body's `text-white` inheritance
+   * makes tables/headings/labels invisible on white cards.
+   *
+   * The `utilities` layer sits above `base`, so any element with
+   * an explicit text-* utility (text-gray-500, text-white, the
+   * Badge variants with text-green-700, etc.) still wins.
+   * ============================================================ */
+  .bg-white,
+  .bg-gray-50,
+  .bg-gray-100,
+  .bg-gray-200,
+  .bg-slate-50,
+  .bg-slate-100 {
+    @apply text-gray-800;
+  }
+  
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white;
+  }
+
+  .glass-card {
+    @apply glass hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-faz-green via-faz-orange to-faz-red bg-clip-text text-transparent;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-faz-green to-faz-orange hover:from-faz-orange hover:to-faz-red text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply glass border-faz-orange text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:bg-faz-orange/20;
+  }
+}
+
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { @apply bg-gray-800; }
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-faz-green to-faz-orange rounded-full;
+}
+::-webkit-scrollbar-thumb:hover { @apply from-faz-orange to-faz-red; }
+
+@media print {
+  .actions { display: none !important; }
+  body * { visibility: hidden; }
+  #data-area, #data-area * { visibility: visible; }
+  #data-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

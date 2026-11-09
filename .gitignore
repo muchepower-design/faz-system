@@ -1,0 +1,11 @@
+node_modules/
+android/.gradle/
+android/app/build/
+android/build/
+ios/Pods/
+ios/build/
+dist/
+*.jks
+*.ps1
+*.txt
+.DS_Store
