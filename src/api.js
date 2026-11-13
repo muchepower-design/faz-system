@@ -109,6 +109,8 @@ export const authAPI = {
     return authAxios.post('/api/ticketing/auth/login', { email, password });
   },
   register: (userData) => authAxios.post('/api/ticketing/auth/register', userData),
+  // NEW — Google sign-in. Frontend sends the id_token from GIS.
+  googleLogin: (idToken) => authAxios.post('/api/auth/google', { id_token: idToken }),
 };
 
 // ---------- Match Events API ----------

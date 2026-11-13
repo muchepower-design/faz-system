@@ -19,10 +19,8 @@ export const AuthProvider = ({ children }) => {
         const decoded = jwtDecode(token);
         if (userStr) {
           const userData = JSON.parse(userStr);
-          // Merge: use userData fields, but ensure role is set from decoded token if missing
           setUser({ ...userData, role: userData.role || decoded.role });
         } else {
-          // Fallback: only username and role from token
           setUser({ username: decoded.sub, role: decoded.role });
         }
       } catch (e) {
@@ -34,15 +32,32 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Shared helper — persist a login result (from password or Google)
+  const applyLoginResult = (access_token, userData) => {
+    localStorage.setItem('token', access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    const decoded = jwtDecode(access_token);
+    setUser({ ...userData, role: userData.role || decoded.role });
+  };
+
   const login = async (email, password) => {
     try {
       const response = await authAPI.login(email, password);
       const { access_token, user: userData } = response.data;
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      const decoded = jwtDecode(access_token);
-      setUser({ ...userData, role: userData.role || decoded.role });
+      applyLoginResult(access_token, userData);
       return { success: true, user: userData };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // NEW — Google sign-in. `idToken` comes from Google Identity Services.
+  const loginWithGoogle = async (idToken) => {
+    try {
+      const response = await authAPI.googleLogin(idToken);
+      const { access_token, user: userData, new_user } = response.data;
+      applyLoginResult(access_token, userData);
+      return { success: true, user: userData, new_user };
     } catch (error) {
       throw error;
     }
@@ -59,7 +74,9 @@ export const AuthProvider = ({ children }) => {
   const hasAnyRole = (roles) => roles.includes(user?.role);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user, hasRole, hasAnyRole }}>
+    <AuthContext.Provider
+      value={{ user, login, loginWithGoogle, logout, loading, isAuthenticated: !!user, hasRole, hasAnyRole }}
+    >
       {children}
     </AuthContext.Provider>
   );
