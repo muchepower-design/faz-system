@@ -12,7 +12,8 @@ import {
   FaClock, FaUserPlus, FaShieldAlt,
 } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
-import { Link } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
+import FanDashboard from './FanDashboard';
 import {
   getTeamName,
   getScoreText,
@@ -28,6 +29,7 @@ const TICKETS_URL = (import.meta.env.VITE_API_FRONTEND_TICKETS || 'https://ticke
 const SHOP_URL = (import.meta.env.VITE_API_FRONTEND_SHOP || 'https://shop.faz.kanchtech.com').replace(/\/$/, '');
 
 const ViewerDashboard = () => {
+  return <FanDashboard />;
   const { user } = useAuth();
 
   // Data

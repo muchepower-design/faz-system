@@ -74,7 +74,7 @@ const Navbar = () => {
     }, 200);
   };
 
-  const getDashboardLink = () => {
+  /*const getDashboardLink = () => {
     if (!user) return '/login';
     switch (user.role) {
       case 'admin': return '/admin/dashboard';
@@ -85,6 +85,23 @@ const Navbar = () => {
       default: return '/dashboard';
     }
   };
+  */
+
+  const getDashboardLink = () => {
+  if (!user) return '/login';
+  switch (user.role) {
+    case 'admin':               return '/admin/dashboard';
+    case 'super_admin':         return '/admin/dashboard';
+    case 'faz_admin':           return '/faz-admin/dashboard';
+    case 'finance_officer':     return '/finance/dashboard';
+    case 'vendor':              return '/dashboard';
+    case 'match_commissioner':  return '/commissioner/dashboard';
+    case 'media_officer':       return '/media/dashboard';
+    case 'club_rep':            return '/club/dashboard';
+    case 'referee':             return '/referee/dashboard';
+    default:                    return '/fan/dashboard';
+  }
+};
 
   const socialLinks = [
     { icon: FaFacebookF, href: 'https://web.facebook.com/FootballAssociationZambia', label: 'Facebook' },

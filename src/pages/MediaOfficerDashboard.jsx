@@ -16,11 +16,38 @@ import { formatDistanceToNow } from 'date-fns';
 export default function MediaOfficerDashboard() {
   const { user, logout } = useAuth();
   const [tab, setTab] = useState('overview');
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Poll the pending-accreditation count so the tab badge stays fresh
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = () => {
+      api.get('/accreditation/admin/stats')
+        .then((res) => { if (!cancelled) setPendingCount(res.data?.pending || 0); })
+        .catch(() => { if (!cancelled) setPendingCount(0); });
+    };
+    refresh();
+    const t = setInterval(refresh, 60_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'publishing', label: 'Publishing' },
     { id: 'media-assets', label: 'Media Assets' },
-    { id: 'accreditation', label: 'Accreditation' },
+    {
+      id: 'accreditation',
+      label: (
+        <span className="flex items-center gap-2">
+          Accreditation
+          {pendingCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold animate-pulse">
+              {pendingCount}
+            </span>
+          )}
+        </span>
+      ),
+    },
   ];
 
   return (
@@ -35,7 +62,15 @@ export default function MediaOfficerDashboard() {
             Publish news, manage media assets, and process match accreditation.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {pendingCount > 0 && (
+            <Link
+              to="/media/accreditation"
+              className="bg-faz-orange hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg animate-pulse"
+            >
+              <FaIdCard /> Review {pendingCount} pending
+            </Link>
+          )}
           <Link to="/news" className="glass px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-white/10">
             <FaRss /> Public News
           </Link>
@@ -111,7 +146,6 @@ function OverviewTab({ user }) {
 
   return (
     <div className="space-y-6">
-      {/* Greeting bar */}
       <GlassCard className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">
@@ -138,7 +172,6 @@ function OverviewTab({ user }) {
         </div>
       </GlassCard>
 
-      {/* KPI grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard icon={FaNewspaper} label="Published News" value={stats.news.published}
           sub={`${stats.news.drafts} in draft`} color="from-faz-green" />
@@ -149,7 +182,6 @@ function OverviewTab({ user }) {
           urgent={stats.accreditation.pending > 0} />
       </div>
 
-      {/* Trend + recent news */}
       <div className="grid lg:grid-cols-3 gap-6">
         <GlassCard className="lg:col-span-2">
           <div className="flex justify-between items-center mb-3">
@@ -207,7 +239,6 @@ function OverviewTab({ user }) {
         </GlassCard>
       </div>
 
-      {/* Quick actions */}
       <GlassCard>
         <h3 className="font-bold text-white mb-3 flex items-center gap-2">
           <FaClock className="text-faz-orange" /> Quick Actions
@@ -258,12 +289,12 @@ function QuickAction({ to, icon: Icon, label, hint, highlight }) {
 }
 
 /* =====================================================================
- * PUBLISHING TAB — articles, drafts, quick edit
+ * PUBLISHING TAB
  * ===================================================================== */
 function PublishingTab() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');     // all | published | draft
+  const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState(null);
 
@@ -291,7 +322,7 @@ function PublishingTab() {
 
   const togglePublish = async (n) => {
     try {
-      const res = await api.put(`/admin/news/${n.id}`, {
+      await api.put(`/admin/news/${n.id}`, {
         ...n,
         is_published: !n.is_published,
       });
@@ -395,7 +426,7 @@ function PublishingTab() {
 }
 
 /* =====================================================================
- * MEDIA ASSETS TAB — videos + galleries
+ * MEDIA ASSETS TAB
  * ===================================================================== */
 function MediaAssetsTab() {
   const [tab, setTab] = useState('videos');
@@ -488,7 +519,7 @@ function MediaAssetsTab() {
 }
 
 /* =====================================================================
- * ACCREDITATION TAB — shortcut to the full accreditation dashboard
+ * ACCREDITATION TAB
  * ===================================================================== */
 function AccreditationTab() {
   const [stats, setStats] = useState(null);

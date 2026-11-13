@@ -72,6 +72,12 @@ import AdminEcommerce from './pages/admin/ecommerce/AdminEcommerce';
 import FinanceDashboard from './pages/finance/FinanceDashboard';
 
 
+import FanDashboard from './pages/FanDashboard';
+import FazAdminDashboard from './pages/FazAdminDashboard';
+import AuditLog from './pages/admin/AuditLog';
+
+import VendorRedirect from './pages/vendor/VendorRedirect';
+
 function App() {
   return (
     <Router>
@@ -229,6 +235,44 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Fan portal */}
+<Route
+  path="/fan/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['viewer', 'customer', 'vendor']}>
+      <FanDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+{/* FAZ Admin portal */}
+<Route
+  path="/faz-admin/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['faz_admin', 'super_admin']}>
+      <FazAdminDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/audit-log"
+  element={
+    <ProtectedRoute allowedRoles={['super_admin', 'admin', 'faz_admin']}>
+      <AuditLog />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/vendor/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['vendor', 'admin', 'super_admin', 'faz_admin']}>
+      <VendorRedirect />
+    </ProtectedRoute>
+  }
+/>
 
                   {/* Leagues */}
                   <Route path="/leagues" element={<Leagues />} />

@@ -6,7 +6,7 @@ import GlassCard from '../../components/GlassCard';
 import {
   FaChartLine, FaMoneyBillWave, FaClock, FaExclamationTriangle,
   FaSyncAlt, FaSearch, FaFilePdf, FaFileExcel, FaPrint,
-  FaChevronLeft, FaChevronRight, FaCheckCircle, FaTimes,
+  FaChevronLeft, FaChevronRight, FaCheckCircle, FaTimes, FaArrowUp, FaArrowDown, FaFileInvoiceDollar,
 } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -46,10 +46,11 @@ const SOURCE_STYLES = {
 // =====================================================================
 export default function FinanceDashboard() {
   const [tab, setTab] = useState('overview');
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'payments', label: 'All Payments' },
-  ];
+const tabs = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'summary',  label: 'Summary' },
+  { id: 'payments', label: 'All Payments' },
+];
 
   return (
     <div className="pt-24 min-h-screen container mx-auto px-6 py-8">
@@ -77,6 +78,7 @@ export default function FinanceDashboard() {
       </div>
 
       {tab === 'overview' && <OverviewTab />}
+      {tab === 'summary' && <SummaryTab />}
       {tab === 'payments' && <PaymentsTab />}
     </div>
   );
@@ -637,6 +639,187 @@ function PaymentDetailModal({ payment, onClose, onUpdated }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// SUMMARY TAB
+// =====================================================================
+function SummaryTab() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true); else setLoading(true);
+    try {
+      const res = await api.get('/finance/summary');
+      setData(res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to load summary');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const exportStatement = () => {
+    if (!data) return;
+    const doc = new jsPDF({ orientation: 'portrait' });
+    doc.setFontSize(16);
+    doc.text('FAZ Finance — Monthly Summary', 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+    doc.text(`This month total: ZMW ${data.grand_this.toLocaleString()}`, 14, 28);
+    doc.text(`Last month total: ZMW ${data.grand_last.toLocaleString()}`, 14, 34);
+    doc.text(`Change: ${data.grand_pct >= 0 ? '+' : ''}${data.grand_pct}%`, 14, 40);
+
+    autoTable(doc, {
+      startY: 46,
+      head: [['Source', 'This month', 'Last month', 'Delta', '% Change']],
+      body: Object.entries(data.sources).map(([_, s]) => [
+        s.label,
+        `ZMW ${s.this.toLocaleString()}`,
+        `ZMW ${s.last.toLocaleString()}`,
+        `ZMW ${s.delta.toLocaleString()}`,
+        `${s.pct >= 0 ? '+' : ''}${s.pct}%`,
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [200, 100, 30], textColor: 255 },
+    });
+
+    if (data.vendors_this_month.length > 0) {
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Vendor', 'Gross (ZMW)', 'FAZ share', 'Orders']],
+        body: data.vendors_this_month.map((v) => [
+          v.business_name,
+          v.gross.toLocaleString(),
+          v.faz_share.toLocaleString(),
+          String(v.orders),
+        ]),
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [0, 128, 0], textColor: 255 },
+      });
+    }
+
+    doc.save(`faz_monthly_summary_${Date.now()}.pdf`);
+  };
+
+  if (loading) {
+    return <div className="flex justify-center py-12">
+      <div className="w-12 h-12 border-4 border-faz-green border-t-faz-orange rounded-full animate-spin" />
+    </div>;
+  }
+  if (!data) return null;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-white">Month-over-Month</h2>
+          <p className="text-sm text-gray-400">
+            Current month vs previous month, by revenue source
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            className="glass px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-white/10 disabled:opacity-50"
+          >
+            <FaSyncAlt className={refreshing ? 'animate-spin' : ''} /> Refresh
+          </button>
+          <button
+            onClick={exportStatement}
+            className="btn-primary text-sm px-4 py-2 flex items-center gap-2"
+          >
+            <FaFileInvoiceDollar /> Export Statement
+          </button>
+        </div>
+      </div>
+
+      {/* Grand total card */}
+      <GlassCard>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-gray-400">This month (all sources)</p>
+            <p className="text-4xl font-bold text-white mt-1">
+              ZMW {data.grand_this.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Last month: ZMW {data.grand_last.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl ${data.grand_pct >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+            {data.grand_pct >= 0 ? <FaArrowUp /> : <FaArrowDown />}
+            <span className="text-2xl font-bold">
+              {data.grand_pct >= 0 ? '+' : ''}{data.grand_pct}%
+            </span>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Sources */}
+      <div className="grid md:grid-cols-3 gap-4">
+        {Object.entries(data.sources).map(([key, s]) => (
+          <GlassCard key={key}>
+            <p className="text-xs uppercase tracking-wider text-gray-400 mb-2">{s.label}</p>
+            <p className="text-2xl font-bold text-white">
+              ZMW {s.this.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+            <div className="flex items-center justify-between mt-3 text-xs">
+              <span className="text-gray-400">
+                Last: ZMW {s.last.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+              <span className={`font-bold flex items-center gap-1 ${s.pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {s.pct >= 0 ? <FaArrowUp size={10} /> : <FaArrowDown size={10} />}
+                {s.pct >= 0 ? '+' : ''}{s.pct}%
+              </span>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+
+      {/* Vendor table */}
+      <GlassCard>
+        <h3 className="font-bold text-white mb-3 flex items-center gap-2">
+          <FaFileInvoiceDollar className="text-faz-orange" /> Per-Vendor Revenue — This Month
+        </h3>
+        {data.vendors_this_month.length === 0 ? (
+          <p className="text-sm text-gray-400 py-4">No vendor sales this month yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-white/10 text-left text-xs uppercase text-gray-400">
+                <tr>
+                  <th className="py-2 px-2">Vendor</th>
+                  <th className="py-2 px-2 text-right">Orders</th>
+                  <th className="py-2 px-2 text-right">Gross</th>
+                  <th className="py-2 px-2 text-right">FAZ Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.vendors_this_month.map((v) => (
+                  <tr key={v.vendor_id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-2 px-2 text-white">{v.business_name}</td>
+                    <td className="py-2 px-2 text-right text-gray-300">{v.orders}</td>
+                    <td className="py-2 px-2 text-right font-mono text-white">
+                      ZMW {v.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-2 px-2 text-right font-mono text-faz-orange">
+                      ZMW {v.faz_share.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </GlassCard>
     </div>
   );
 }

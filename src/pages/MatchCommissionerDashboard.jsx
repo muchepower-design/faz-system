@@ -5,7 +5,8 @@ import MatchResultForm from '../components/MatchResultForm';
 import { matchesAPI, matchEventsAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { FaCalendarAlt, FaFutbol, FaCheckCircle, FaBroadcastTower } from 'react-icons/fa';
+import { FaCalendarAlt, FaFutbol, FaCheckCircle, FaBroadcastTower,FaFileAlt  } from 'react-icons/fa';
+import CommissionerReportModal from '../components/CommissionerReportModal';
 
 const MatchCommissionerDashboard = () => {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ const MatchCommissionerDashboard = () => {
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reportMatch, setReportMatch] = useState(null);
 
   useEffect(() => {
     fetchMatches();
@@ -130,22 +132,34 @@ const MatchCommissionerDashboard = () => {
 
       {/* Recently finished matches */}
       {finishedMatches.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-            <FaCheckCircle className="text-faz-green" /> Recently Finished
-          </h2>
-          <div className="space-y-2">
-            {finishedMatches.map(match => (
-              <GlassCard key={match.id} className="text-sm">
-                <div className="flex justify-between">
-                  <span className="font-semibold">{match.home_team} {match.home_score} – {match.away_score} {match.away_team}</span>
-                  <span className="text-gray-400">{new Date(match.match_date).toLocaleDateString()}</span>
-                </div>
-              </GlassCard>
-            ))}
+  <div>
+    <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+      <FaCheckCircle className="text-faz-green" /> Recently Finished
+    </h2>
+    <div className="space-y-2">
+      {finishedMatches.map(match => (
+        <GlassCard key={match.id} className="text-sm">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold">
+                {match.home_team} {match.home_score} – {match.away_score} {match.away_team}
+              </p>
+              <p className="text-gray-400 text-xs">
+                {new Date(match.match_date).toLocaleDateString()} · {match.venue || 'Venue TBC'}
+              </p>
+            </div>
+            <button
+              onClick={() => setReportMatch(match)}
+              className="btn-secondary text-sm px-3 py-1.5 flex items-center gap-1"
+            >
+              <FaFileAlt /> Submit Report
+            </button>
           </div>
-        </div>
-      )}
+        </GlassCard>
+      ))}
+    </div>
+  </div>
+)}
 
       {/* Result entry modal */}
       {selectedMatch && (
@@ -172,6 +186,14 @@ const MatchCommissionerDashboard = () => {
           </div>
         </div>
       )}
+
+      {reportMatch && (
+  <CommissionerReportModal
+    match={reportMatch}
+    onClose={() => setReportMatch(null)}
+    onSaved={fetchMatches}
+  />
+)}
     </div>
   );
 };

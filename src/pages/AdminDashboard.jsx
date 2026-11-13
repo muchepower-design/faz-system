@@ -11,14 +11,14 @@ import {
   FaDatabase, FaUserPlus, FaTrophy, FaHandshake,
   FaArrowRight, FaThLarge, FaList, FaSearch, FaFilePdf,
   FaFileExcel, FaPrint, FaChevronLeft, FaChevronRight,
-  FaFileAlt,FaUserEdit,
+  FaFileAlt,FaUserEdit,FaShieldAlt,
 } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-
+import ContentQuickEdit from './admin/content/ContentQuickEdit';
 
 // =====================================================================
 // Searchable Select
@@ -1601,7 +1601,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-8">
-          {['overview', 'news', 'matches', 'teams', 'clubs', 'roles', 'users', 'competitions', 'bulk-import', 'content'].map(tab => (
+          {['overview', 'news', 'matches', 'teams', 'clubs', 'roles', 'users', 'competitions', 'bulk-import', 'content', 'content-inline', 'audit'].map(tab => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setShowForm(false); setEditingItem(null); setFormData({}); }}
@@ -1609,7 +1609,9 @@ const AdminDashboard = () => {
                 activeTab === tab ? 'bg-gradient-to-r from-faz-green to-faz-orange text-white' : 'glass hover:bg-white/20'
               }`}
             >
-              {tab === 'bulk-import' ? 'Bulk Import' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'bulk-import' ? 'Bulk Import'
+  : tab === 'content-inline' ? 'Content Editor'
+  : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -1886,27 +1888,54 @@ const AdminDashboard = () => {
           </GlassCard>
         )}
 
-        {/* Content management */}
         {activeTab === 'content' && (
-          <GlassCard>
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <FaFileAlt /> Content Management
-            </h2>
-            <p className="text-gray-400 text-sm">Manage static pages, banners, and other content.</p>
-          
-          <Link to="/admin/content">
-  <GlassCard className="text-center hover:scale-105 transition hover:bg-white/10 cursor-pointer">
-    <div className="text-5xl mb-3">📝</div>
-    <h3 className="text-xl font-bold">Content Manager</h3>
-    <p className="text-gray-400 text-sm">
-      Hero slides · Partners · Governance · Pages
+  <GlassCard>
+    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+      <FaFileAlt /> Content Management
+    </h2>
+    <p className="text-gray-400 text-sm mb-4">
+      Manage hero slides, partners, governance, static pages, navigation, and footer.
     </p>
+    <div className="grid sm:grid-cols-2 gap-3">
+      <button onClick={() => setActiveTab('content-inline')} className="text-left">
+        <GlassCard className="hover:scale-105 transition hover:bg-white/10 cursor-pointer">
+          <div className="text-4xl mb-2">📝</div>
+          <h3 className="text-lg font-bold">Inline Editor</h3>
+          <p className="text-gray-400 text-sm">Edit here without leaving this page</p>
+        </GlassCard>
+      </button>
+      <Link to="/admin/content">
+        <GlassCard className="hover:scale-105 transition hover:bg-white/10 cursor-pointer">
+          <div className="text-4xl mb-2">🖥️</div>
+          <h3 className="text-lg font-bold">Full Page</h3>
+          <p className="text-gray-400 text-sm">Open in dedicated view</p>
+        </GlassCard>
+      </Link>
+    </div>
   </GlassCard>
-</Link>
-          
-          </GlassCard>
+)}
 
-        )}
+        {activeTab === 'content-inline' && <ContentQuickEdit />}
+
+        {/*Audit trail*/}
+        {activeTab === 'audit' && (
+  <GlassCard>
+    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+      <FaShieldAlt /> Audit Log
+    </h2>
+    <p className="text-gray-400 text-sm mb-4">
+      Every admin action is recorded for compliance.
+    </p>
+    <Link to="/admin/audit-log">
+      <GlassCard className="text-center hover:scale-105 transition hover:bg-white/10 cursor-pointer">
+        <div className="text-5xl mb-3">📋</div>
+        <h3 className="text-xl font-bold">Open Audit Log</h3>
+        <p className="text-gray-400 text-sm">Searchable, filterable, exportable</p>
+      </GlassCard>
+    </Link>
+  </GlassCard>
+)}
+
       </div>
     </div>
   );

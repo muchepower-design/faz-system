@@ -18,6 +18,23 @@ const Login = () => {
   const googleButtonRef = useRef(null);
 
   const getDashboardPath = (role) => {
+  switch (role) {
+    case 'admin':               return '/admin/dashboard';
+    case 'super_admin':         return '/admin/dashboard';
+    case 'faz_admin':           return '/faz-admin/dashboard';        // was /admin/content
+    case 'finance_officer':     return '/finance/dashboard';
+    case 'vendor':              return '/dashboard';                  // we'll redirect below
+    case 'match_commissioner':  return '/commissioner/dashboard';
+    case 'media_officer':       return '/media/dashboard';
+    case 'club_rep':            return '/club/dashboard';
+    case 'referee':             return '/referee/dashboard';
+    case 'customer':            return '/fan/dashboard';              // was /dashboard
+    case 'viewer':              return '/fan/dashboard';              // was /dashboard
+    default:                    return '/fan/dashboard';
+  }
+};
+
+  /*const getDashboardPath = (role) => {
     switch (role) {
       case 'admin':               return '/admin/dashboard';
       case 'super_admin':         return '/admin/dashboard';
@@ -33,6 +50,7 @@ const Login = () => {
       default:                    return '/dashboard';
     }
   };
+  */
 
   // Redirect away if already logged in
   useEffect(() => {
